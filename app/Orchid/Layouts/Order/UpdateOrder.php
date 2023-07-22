@@ -1,10 +1,8 @@
 <?php
 
-namespace App\Orchid\Layouts;
+namespace App\Orchid\Layouts\Order;
 
-use App\Models\Product;
 use App\Models\User;
-use App\Models\OrderItem;
 use Orchid\Screen\Field;
 use Orchid\Screen\Fields\Group;
 use Orchid\Screen\Fields\Input;

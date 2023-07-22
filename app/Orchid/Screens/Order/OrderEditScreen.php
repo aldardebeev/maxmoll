@@ -6,18 +6,11 @@ use App\Http\Requests\OrderItemRequest;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
-use App\Models\User;
 use App\Orchid\Layouts\Order\OrderItemListTable;
-use App\Orchid\Layouts\Order\OrderListTable;
-use App\Orchid\Layouts\UpdateOrder;
-use Illuminate\Http\Request;
-use Orchid\Screen\Actions\Button;
-use Orchid\Screen\Actions\Link;
 use Orchid\Screen\Actions\ModalToggle;
 use Orchid\Screen\Fields\Input;
 use Orchid\Screen\Fields\Relation;
 use Orchid\Screen\Screen;
-use Orchid\Screen\TD;
 use Orchid\Support\Facades\Alert;
 use Orchid\Support\Facades\Layout;
 
@@ -85,18 +78,24 @@ class OrderEditScreen extends Screen
     public function create(OrderItemRequest $request)
     {
         $validatedData = $request->validated();
-        $product = Product::findOrFail($validatedData['product_id']);
-        if ($product->stock >= $validatedData['count']) {
-            $product->stock -= $validatedData['count'];
-            $product->save();
-            OrderItem::create($validatedData);
+        $order = Order::where('id', $validatedData['order_id'])->first();
+        if( $order->status === 'active'){
+            $product = Product::findOrFail($validatedData['product_id']);
+            if ($product->stock >= $validatedData['count']) {
+                $product->stock -= $validatedData['count'];
+                $product->save();
+                OrderItem::create($validatedData);
+            }
+        }
+        else{
+            Alert::info('Заказ не активный');
+            return back();
         }
     }
 
     public function removeOrderItem (int $order_item_id)
     {
         $orderItem = OrderItem::find($order_item_id);
-
         $product = Product::findOrFail($orderItem->product_id);
         $product->stock += $orderItem->count;
         $product->save();

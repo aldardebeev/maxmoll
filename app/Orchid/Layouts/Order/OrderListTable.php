@@ -60,10 +60,11 @@ class OrderListTable extends Table
                         'order' => $order->id
                     ]);
             }),
-
             TD::make( '')->render(function (Order $order) {
-                return '<a href="' . route('platform.order.show', ['order' => $order->id]) . '">' . "Добавить Товары" . '</a>';
-            }),
+                if ($order->status === "active") {
+                    return '<a href="' . route('platform.order.show', ['order' => $order->id]) . '">' . "Добавить Товары" . '</a>';
+                }
+            })
 //            TD::make('')->render(function (Order $order) {
 //                return Button::make('Удалить')
 //                    ->confirm('Вы уверены, что хотите удалить заказ?')

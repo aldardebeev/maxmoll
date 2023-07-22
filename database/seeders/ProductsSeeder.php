@@ -14,17 +14,17 @@ class ProductsSeeder extends Seeder
     public function run(): void
     {
         Product::create([
-            'name' => 'Телефон',
+            'name' => 'Ноутбук',
             'price' => 1000,
             'stock' => 100
         ]);
         Product::create([
-            'name' => 'Телевизор',
+            'name' => 'Наушники',
             'price' => 11000,
             'stock' => 100
         ]);
         Product::create([
-            'name' => 'Компьютер',
+            'name' => 'Клавиатура',
             'price' => 111000,
             'stock' => 100
         ]);

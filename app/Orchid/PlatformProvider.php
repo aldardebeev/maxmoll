@@ -45,6 +45,9 @@ class PlatformProvider extends OrchidServiceProvider
                 ->icon('action-redo')
                 ->route('platform.AnalyticsAndReports')
                 ->title('Аналитика и отчеты'),
+            Menu::make('Логистика')
+                ->route('platform.logistics')
+                ->title('Логистика'),
 //            Menu::make('Get Started')
 //                ->icon('bs.book')
 //                ->title('Navigation')
