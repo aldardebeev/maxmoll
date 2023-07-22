@@ -35,9 +35,16 @@ class PlatformProvider extends OrchidServiceProvider
     {
         return [
             Menu::make('Пользователи')
-                ->icon('user-follow')
+                ->icon('user')
                 ->route('platform.clients')
                 ->title('Пользователи'),
+            Menu::make('Заказы')
+                ->route('platform.orders')
+                ->title('Заказы'),
+            Menu::make('Аналитика и отчеты')
+                ->icon('action-redo')
+                ->route('platform.AnalyticsAndReports')
+                ->title('Аналитика и отчеты'),
 //            Menu::make('Get Started')
 //                ->icon('bs.book')
 //                ->title('Navigation')

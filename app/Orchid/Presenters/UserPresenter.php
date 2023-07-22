@@ -33,7 +33,7 @@ class UserPresenter extends Presenter implements Searchable, Personable
      */
     public function subTitle(): string
     {
-        $roles = $this->entity->roles->pluck('name')->implode(' / ');
+        $roles = $this->entity;
 
         return (string) Str::of($roles)
             ->limit(20)
@@ -53,11 +53,11 @@ class UserPresenter extends Presenter implements Searchable, Personable
      */
     public function image(): ?string
     {
-        $hash = md5(strtolower(trim($this->entity->email)));
+
 
         $default = urlencode('https://raw.githubusercontent.com/orchidsoftware/.github/main/web/avatars/gravatar.png');
 
-        return "https://www.gravatar.com/avatar/$hash?d=$default";
+        return "https://www.gravatar.com/avatar/?d=$default";
     }
 
     /**

@@ -15,17 +15,17 @@ class ProductsSeeder extends Seeder
     {
         Product::create([
             'name' => 'Телефон',
-            'price' => 1000.99,
+            'price' => 1000,
             'stock' => 100
         ]);
         Product::create([
             'name' => 'Телевизор',
-            'price' => 11000.99,
+            'price' => 11000,
             'stock' => 100
         ]);
         Product::create([
             'name' => 'Компьютер',
-            'price' => 111000.99,
+            'price' => 111000,
             'stock' => 100
         ]);
     }

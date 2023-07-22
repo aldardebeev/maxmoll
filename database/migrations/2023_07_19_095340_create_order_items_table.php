@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade')->onUpdate('cascade');
             $table->integer('count');
             $table->float('discount')->default(0);
-            $table->float('cost');
+            $table->bigInteger('cost');
             $table->timestamps();
         });
     }

@@ -2,29 +2,25 @@
 
 namespace App\Orchid\Screens;
 
-use App\Models\User;
-
+use App\Models\Order;
+use App\Orchid\Layouts\Charts\DynamicsInterviewedOrders;
+use App\Orchid\Layouts\Charts\ReportCompletedTime;
 use Orchid\Screen\Screen;
-use Orchid\Screen\TD;
-use Orchid\Support\Facades\Layout;
 
-
-
-class UserListScreen extends Screen
+class AnalyticsAndReportsScreen extends Screen
 {
     /**
      * Fetch data to be displayed on the screen.
      *
      * @return array
      */
-    public $user;
-
-
     public function query(): iterable
     {
-        $user = User::all();
         return [
-            'users' => $user
+            'reportCompletedTime' => Order::countForGroup('status')->toChart(),
+            'DynamicsInterviewedOrders' => [
+                Order::where('status', 'completed')->countByDays(null, null, 'updated_at')->toChart('Завершенные заказы'),
+            ]
         ];
     }
 
@@ -35,7 +31,7 @@ class UserListScreen extends Screen
      */
     public function name(): ?string
     {
-        return 'Пользователи';
+        return 'Аналитика и отчеты';
     }
 
     /**
@@ -43,7 +39,10 @@ class UserListScreen extends Screen
      *
      * @return \Orchid\Screen\Action[]
      */
-
+    public function commandBar(): iterable
+    {
+        return [];
+    }
 
     /**
      * The screen's layout elements.
@@ -53,11 +52,8 @@ class UserListScreen extends Screen
     public function layout(): iterable
     {
         return [
-            Layout::table('users', [
-                TD::make('name', ' Имя'),
-            ])
+            ReportCompletedTime::class,
+            DynamicsInterviewedOrders::class
         ];
     }
-
-
 }

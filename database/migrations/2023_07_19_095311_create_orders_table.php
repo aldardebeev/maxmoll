@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('customer', 255);
             $table->string('phone', 255);
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade')->onUpdate('cascade');
-            $table->string('type', 255);
-            $table->string('status', 255);
+            $table->enum('type', ['online', 'offline']);
+            $table->enum('status', ['active', 'completed', 'canceled'])->default('active');
             $table->timestamps();
         });
     }

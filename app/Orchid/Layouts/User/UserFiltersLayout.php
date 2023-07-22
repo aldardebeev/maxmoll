@@ -14,7 +14,7 @@ class UserFiltersLayout extends Selection
     public function filters(): array
     {
         return [
-            RoleFilter::class,
+
         ];
     }
 }
