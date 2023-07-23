@@ -2,7 +2,8 @@
 
 namespace App\Orchid\Screens\Order;
 
-use App\Http\Requests\OrderRequest;
+use App\Events\OrderCreatedOrUpdated;
+use App\Orchid\Requests\OrderRequest;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -74,8 +75,8 @@ class OrderListScreen extends Screen
     }
     public function createOrUpdateOrder(OrderRequest $request): void
     {
-        $this->checkStatus($request['order']);
         $orderId = $request->input('order.id');
+        event(new OrderCreatedOrUpdated($orderId, $request['order']));
         Order::updateOrCreate([
             'id' => $orderId
         ], array_merge($request['order']));
@@ -83,38 +84,4 @@ class OrderListScreen extends Screen
 
     }
 
-    public function checkStatus($order)
-    {
-        $oldOrder = Order::find($order['id']);
-
-        if ($oldOrder === null || $oldOrder->status === $order['status'] ) {
-            return;
-        }
-        if ($oldOrder->status === 'completed' &&  $order['status'] === 'active' || $oldOrder->status === 'active' &&  $order['status'] === 'completed'){
-            return;
-        }
-        $orderItems = OrderItem::where('order_id', $order['id'])->get();
-
-        if ($order['status'] === 'canceled') {
-            foreach ($orderItems as $orderItem) {
-                $product = Product::find($orderItem->product_id);
-                if ($product) {
-                    $product->stock += $orderItem->count;
-                    $product->save();
-                }
-            }
-        } elseif ($order['status'] === 'active' || $order['status'] === 'completed') {
-            foreach ($orderItems as $orderItem) {
-                $product = Product::find($orderItem->product_id);
-                    $availableStock = $product->stock - $orderItem->count;
-                    if ($availableStock >= 0) {
-                        $product->stock = $availableStock;
-                        $product->save();
-                    }
-            }
-        } else{
-            return;
-        }
-
-    }
 }

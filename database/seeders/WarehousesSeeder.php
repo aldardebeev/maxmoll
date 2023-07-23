@@ -16,19 +16,19 @@ class WarehousesSeeder extends Seeder
     public function run(): void
     {
         Warehouse::create([
-            'name' => 'Склад1',
+            'name' => 'Склад 1',
         ]);
         Warehouse::create([
-            'name' => 'Склад2',
+            'name' => 'Склад 2',
         ]);
         Warehouse::create([
-            'name' => 'Склад3',
+            'name' => 'Склад 3',
         ]);
         Warehouse::create([
-            'name' => 'Склад4',
+            'name' => 'Склад 4',
         ]);
         Warehouse::create([
-            'name' => 'Склад5',
+            'name' => 'Склад 5',
         ]);
 
 

@@ -2,11 +2,13 @@
 
 namespace App\Orchid\Screens\Order;
 
-use App\Http\Requests\OrderItemRequest;
+
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Orchid\Layouts\Order\OrderItemListTable;
+use App\Orchid\Requests\OrderItemRequest;
+use Illuminate\Support\Facades\DB;
 use Orchid\Screen\Actions\ModalToggle;
 use Orchid\Screen\Fields\Input;
 use Orchid\Screen\Fields\Relation;
@@ -27,7 +29,7 @@ class OrderEditScreen extends Screen
     public function query(Order $order): iterable
     {
         $this->order = $order;
-        $this->orderItem = OrderItem::where('order_id',   $this->order->id)->get();
+        $this->orderItem = OrderItem::where('order_id', $this->order->id)->get();
         return [
             'order_items' => $this->orderItem
         ];
@@ -40,8 +42,7 @@ class OrderEditScreen extends Screen
      */
     public function name(): ?string
     {
-        $name = 'Заказ №' . $this->order->id;
-        return $name ;
+        return 'Заказ';
     }
 
     /**
@@ -52,7 +53,7 @@ class OrderEditScreen extends Screen
     public function commandBar(): iterable
     {
         return [
-            ModalToggle::make('Добавление товара')->modal('editOrder', )->method('create'),
+            ModalToggle::make('Добавление товара')->modal('editOrder', )->method('addOrderItem'),
         ];
     }
 
@@ -75,32 +76,45 @@ class OrderEditScreen extends Screen
 
     }
 
-    public function create(OrderItemRequest $request)
+    public function addOrderItem(OrderItemRequest $request)
     {
         $validatedData = $request->validated();
         $order = Order::where('id', $validatedData['order_id'])->first();
-        if( $order->status === 'active'){
+
+        if ($order->status === 'active') {
             $product = Product::findOrFail($validatedData['product_id']);
-            if ($product->stock >= $validatedData['count']) {
-                $product->stock -= $validatedData['count'];
+            $product->stock -= $validatedData['count'];
+
+            // Используем транзакцию для объединения двух операций в одну
+            DB::transaction(function () use ($product, $validatedData) {
                 $product->save();
                 OrderItem::create($validatedData);
-            }
-        }
-        else{
+            });
+        } else {
             Alert::info('Заказ не активный');
             return back();
         }
     }
 
-    public function removeOrderItem (int $order_item_id)
+    public function removeOrderItem(int $order_item_id)
     {
         $orderItem = OrderItem::find($order_item_id);
-        $product = Product::findOrFail($orderItem->product_id);
-        $product->stock += $orderItem->count;
-        $product->save();
-        $orderItem->delete();
-        Alert::info('Запись успешно удалена');
+
+        if ($orderItem) {
+            $product = Product::findOrFail($orderItem->product_id);
+            $product->stock += $orderItem->count;
+
+            // Используем транзакцию для объединения операций удаления и обновления товара
+            DB::transaction(function () use ($product, $orderItem) {
+                $product->save();
+                $orderItem->delete();
+            });
+
+            Alert::info('Запись успешно удалена');
+        } else {
+            Alert::info('Запись не найдена');
+        }
+
         return back();
     }
 

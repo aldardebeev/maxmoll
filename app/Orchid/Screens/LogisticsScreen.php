@@ -2,7 +2,8 @@
 
 namespace App\Orchid\Screens;
 
-use App\Http\Requests\ProductManagementRequest;
+use App\Models\OrderItem;
+use App\Orchid\Requests\ProductManagementRequest;
 use App\Models\Product;
 use App\Models\ProductMovement;
 use App\Models\Warehouse;
@@ -12,6 +13,7 @@ use App\Orchid\Layouts\ProductManagement\ProductsTable;
 use App\Orchid\Layouts\ProductManagement\SaleManagement;
 use App\Orchid\Layouts\ProductManagement\TransferManagement;
 use App\Orchid\Layouts\ProductManagement\WarehousesTable;
+use Illuminate\Support\Facades\DB;
 use Orchid\Screen\Actions\ModalToggle;
 use Orchid\Screen\Screen;
 use Orchid\Screen\TD;
@@ -69,11 +71,11 @@ class LogisticsScreen extends Screen
             Layout::modal('transfer', TransferManagement::class)->title('Перенос товара')->applyButton('Перенести'),
             Layout::modal('arrival', ArrivalManagement::class)->title('Прибытие товара')->applyButton('Применить'),
             Layout::modal('sale', SaleManagement::class)->title('Продажа со склада')->applyButton('Применить'),
-            ProductManagementTable::class,
             Layout::columns([
                 WarehousesTable::class,
                 ProductsTable::class
             ]),
+            ProductManagementTable::class,
 
         ];
     }
@@ -91,14 +93,10 @@ class LogisticsScreen extends Screen
         $product = Product::findOrFail($validatedData['product_id']);
         if ($product->stock >= $validatedData['quantity']) {
             $product->stock += $validatedData['quantity'];
-            $product->save();
-            ProductMovement::create($validatedData);
-        } $validatedData = $request->validated();
-        $product = Product::findOrFail($validatedData['product_id']);
-        if ($product->stock >= $validatedData['quantity']) {
-            $product->stock += $validatedData['quantity'];
-            $product->save();
-            ProductMovement::create($validatedData);
+            DB::transaction(function () use ($product, $validatedData) {
+                $product->save();
+                ProductMovement::create($validatedData);
+            });
         }
     }
 
@@ -108,8 +106,10 @@ class LogisticsScreen extends Screen
         $product = Product::findOrFail($validatedData['product_id']);
         if ($product->stock >= $validatedData['quantity']) {
             $product->stock -= $validatedData['quantity'];
-            $product->save();
-            ProductMovement::create($validatedData);
+            DB::transaction(function () use ($product, $validatedData) {
+                $product->save();
+                ProductMovement::create($validatedData);
+            });
         }
     }
 
