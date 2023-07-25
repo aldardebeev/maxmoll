@@ -30,6 +30,7 @@ class SaleManagement extends Rows
             Input::make('movement_type' )->type('hidden')->value('sale'),
             Group::make([
                 Relation::make('product_id')->fromModel(Product::class, 'name')->title('Товар')->required(),
+
                 Input::make('quantity')->type('number')->title('Колличество')->required(),
             ]),
             Relation::make('warehouse_from_id')->fromModel(Warehouse::class, 'name')->title('Из склада')->required(),

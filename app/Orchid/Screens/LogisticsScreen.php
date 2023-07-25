@@ -29,6 +29,7 @@ class LogisticsScreen extends Screen
      */
     public function query(): iterable
     {
+        // Retrieve data for the screen
         return [
             'ProductMovement' => ProductMovement::filters()->paginate(10),
             'warehouses' => Warehouse::paginate(10),
@@ -43,6 +44,7 @@ class LogisticsScreen extends Screen
      */
     public function name(): ?string
     {
+        // Screen name displayed in the header
         return 'Логистика';
     }
 
@@ -53,6 +55,7 @@ class LogisticsScreen extends Screen
      */
     public function commandBar(): iterable
     {
+        // Define action buttons in the command bar
         return [
             ModalToggle::make('Перенос товаров')->modal('transfer')->method('transfer'),
             ModalToggle::make('Прибытие товаров')->modal('arrival')->method('arrival'),
@@ -67,6 +70,7 @@ class LogisticsScreen extends Screen
      */
     public function layout(): iterable
     {
+        // Define layout elements for the screen
         return [
             Layout::modal('transfer', TransferManagement::class)->title('Перенос товара')->applyButton('Перенести'),
             Layout::modal('arrival', ArrivalManagement::class)->title('Прибытие товара')->applyButton('Применить'),
@@ -76,64 +80,97 @@ class LogisticsScreen extends Screen
                 ProductsTable::class
             ]),
             ProductManagementTable::class,
-
         ];
     }
 
+    /**
+     * Handle the transfer of products.
+     *
+     * @param ProductManagementRequest $request
+     */
     public function transfer(ProductManagementRequest $request)
     {
+        // Validate the request data
         $validatedData = $request->validated();
-        $product = ProductMovement::where('product_id', $validatedData['product_id'])
+
+        // Find the product movement record for the given product ID and warehouse ID
+        $productMovement = ProductMovement::where('product_id', $validatedData['product_id'])
             ->where('warehouse_to_id', $validatedData['warehouse_from_id'])
             ->first();
-        // Проверяем, существует ли товар с указанным ID на складе
-        if (!$product) {
+
+        // Check if the product exists in the specified warehouse
+        if (!$productMovement) {
             Toast::error('Товар не найден на указанном складе');
             return;
         }
+
+        // Check if the requested quantity is available in the warehouse
+        if ($productMovement->quantity < $validatedData['quantity']) {
+            Toast::error('Товара выбрано слишком много. На складе: ' . $productMovement->quantity);
+            return;
+        }
+
+        // Reduce the quantity from the current warehouse and create a new product movement record
+        $productMovement->quantity -= $validatedData['quantity'];
+        $productMovement->save();
         ProductMovement::create($validatedData);
+
         Toast::info('Товары перенесены');
     }
 
+    /**
+     * Handle the arrival of products.
+     *
+     * @param ProductManagementRequest $request
+     */
     public function arrival(ProductManagementRequest $request)
     {
+        // Validate the request data
         $validatedData = $request->validated();
-        $product = Product::findOrFail($validatedData['product_id']);
-        if ($product->stock >= $validatedData['quantity']) {
-            $product->stock += $validatedData['quantity'];
-            DB::transaction(function () use ($product, $validatedData) {
-                $product->save();
-                ProductMovement::create($validatedData);
-            });
-        }
+
+        // Create a new product movement record for the arrival of products
+        ProductMovement::create($validatedData);
     }
 
+    /**
+     * Handle the sale of products.
+     *
+     * @param ProductManagementRequest $request
+     */
     public function sale(ProductManagementRequest $request)
     {
+        // Validate the request data
         $validatedData = $request->validated();
-        $product = ProductMovement::where('product_id', $validatedData['product_id'])
+
+        // Find the product movement record for the given product ID and warehouse ID
+        $productMovement = ProductMovement::where('product_id', $validatedData['product_id'])
             ->where('warehouse_to_id', $validatedData['warehouse_from_id'])
             ->first();
-        // Проверяем, существует ли товар с указанным ID на складе
 
-        if (!$product) {
+        // Check if the product exists in the specified warehouse
+        if (!$productMovement) {
             Toast::error('Товар не найден на указанном складе');
             return;
         }
-        if ($product->quantity < $validatedData['quantity']){
-            Toast::error('Товар выбранно слишком много. На складе: ' . $product->quantity);
+
+        $availableQuantity = $productMovement->quantity;
+
+        // Check if the requested quantity is available in the warehouse
+        if ($availableQuantity < $validatedData['quantity']) {
+            Toast::error('Товара выбрано слишком много. На складе: ' . $availableQuantity);
             return;
         }
 
-        $product = Product::findOrFail($validatedData['product_id']);
-        if ($product->stock >= $validatedData['quantity']) {
-            $product->stock -= $validatedData['quantity'];
-            DB::transaction(function () use ($product, $validatedData) {
-                $product->save();
-                ProductMovement::create($validatedData);
+        $product = $productMovement->product;
+
+        // Perform the sale transaction
+        if ($productMovement->quantity >= $validatedData['quantity']) {
+            $productMovement->quantity -= $validatedData['quantity'];
+
+            DB::transaction(function () use ($product, $validatedData, $productMovement) {
+                $productMovement->save();
+                $product->productMovements()->create($validatedData);
             });
         }
     }
-
-
 }
