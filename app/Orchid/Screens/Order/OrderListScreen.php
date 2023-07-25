@@ -77,6 +77,7 @@ class OrderListScreen extends Screen
     {
         $orderId = $request->input('order.id');
         event(new OrderCreatedOrUpdated($orderId, $request['order']));
+
         Order::updateOrCreate([
             'id' => $orderId
         ], array_merge($request['order']));

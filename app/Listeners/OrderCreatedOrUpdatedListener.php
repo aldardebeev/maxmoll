@@ -6,6 +6,8 @@ use App\Events\OrderCreatedOrUpdated;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use Orchid\Support\Facades\Alert;
+use Orchid\Support\Facades\Toast;
 
 class OrderCreatedOrUpdatedListener
 {
@@ -26,7 +28,6 @@ class OrderCreatedOrUpdatedListener
         $orderData = $event->orderData;
 
         $this->checkOrderStatus($orderId, $orderData);
-//        $this->updateProductStockBasedOnOrderStatus($event->orderId, $event->orderData['status']);
     }
 
     private function checkOrderStatus(?int $orderId, array $orderData): void
@@ -65,11 +66,17 @@ class OrderCreatedOrUpdatedListener
         } elseif ($status === 'active' || $status === 'completed') {
             foreach ($orderItems as $orderItem) {
                 $product = Product::find($orderItem->product_id);
-                $availableStock = $product->stock - $orderItem->count;
-                if ($availableStock >= 0) {
-                    $product->stock = $availableStock;
-                    $product->save();
+                if ($orderItem->count > $product->stock){
+                    Alert::info('Товара недостаточно');
+                    return;
+                }else{
+                    $availableStock = $product->stock - $orderItem->count;
+                    if ($availableStock >= 0) {
+                        $product->stock = $availableStock;
+                        $product->save();
+                    }
                 }
+
             }
         }
     }

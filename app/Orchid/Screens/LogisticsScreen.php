@@ -83,6 +83,14 @@ class LogisticsScreen extends Screen
     public function transfer(ProductManagementRequest $request)
     {
         $validatedData = $request->validated();
+        $product = ProductMovement::where('product_id', $validatedData['product_id'])
+            ->where('warehouse_to_id', $validatedData['warehouse_from_id'])
+            ->first();
+        // Проверяем, существует ли товар с указанным ID на складе
+        if (!$product) {
+            Toast::error('Товар не найден на указанном складе');
+            return;
+        }
         ProductMovement::create($validatedData);
         Toast::info('Товары перенесены');
     }
@@ -103,6 +111,20 @@ class LogisticsScreen extends Screen
     public function sale(ProductManagementRequest $request)
     {
         $validatedData = $request->validated();
+        $product = ProductMovement::where('product_id', $validatedData['product_id'])
+            ->where('warehouse_to_id', $validatedData['warehouse_from_id'])
+            ->first();
+        // Проверяем, существует ли товар с указанным ID на складе
+
+        if (!$product) {
+            Toast::error('Товар не найден на указанном складе');
+            return;
+        }
+        if ($product->quantity < $validatedData['quantity']){
+            Toast::error('Товар выбранно слишком много. На складе: ' . $product->quantity);
+            return;
+        }
+
         $product = Product::findOrFail($validatedData['product_id']);
         if ($product->stock >= $validatedData['quantity']) {
             $product->stock -= $validatedData['quantity'];

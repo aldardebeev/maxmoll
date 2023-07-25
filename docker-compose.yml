@@ -32,9 +32,16 @@ services:
             - ./docker-compose/mysql:/docker-entrypoint-initdb.d
         networks:
             - maxmoll
+    phpmyadmin:
+        image: phpmyadmin
+        restart: always
         ports:
-            - 3307:3306
-
+            - 8080:80
+        environment:
+            - PMA_HOST=db
+            - PMA_PORT=3306
+        networks:
+            - maxmoll
     nginx:
         image: nginx:1.25-alpine
         container_name: maxmoll-nginx
